@@ -1,316 +1,411 @@
 <template>
-    <div class="app-container">
+  <div class="app-container">
+    <div class="main-content">
+      <header class="title-section">
+        <p class="eyebrow">Parkinson’s Early-Screening Companion</p>
+        <h1>NEUROTONE</h1>
+        <p class="today">{{ todayLabel }}</p>
+      </header>
 
-        <div class="main-content">
-            <div class="title-section">
-                <h1>NEUROTONE</h1>
+      <section class="carousel-shell">
+        <Carousel v-bind="config">
+          <Slide
+            v-for="image in images"
+            :key="image.id"
+            class="slide"
+            @click="goToTest(image.route, image.id)"
+          >
+            <div
+              class="autoscroll-container"
+              :style="`background-image: url(${image.url});`"
+            >
+              <div class="slide-chip">Tap to open</div>
             </div>
-
-            <Carousel v-bind="config" style="margin-bottom: 2rem; height: 13.4rem; border-radius: 0.8rem;">
-            <Slide v-for="image in images" :key="image.id" @click="$router.push(image.route)" style="padding: 0rem 1rem; height: 13.4rem; border-radius: 0.8rem;">
-                <div class="autoscroll-container" 
-                    :style='`background-image: url(${image.url}); background-size: cover; height: 100%; width: 100%; border-radius: 0.8rem;`'>
-                </div>
-            </Slide>
+          </Slide>
         </Carousel>
+      </section>
 
-            <section class="all-tests-section">
-                <h2>ALL TESTS</h2>
-                <div class="test-boxes">
-                    <div class="test-box" @touchstart="isTouched = 'voice'" :class="{ active: isTouched == 'voice' }"
-                        @click="$router.push('/voice')">
-                        <img src="../assets/rotatedarrow.png" class="rotated-arrow" v-show="isTouched == 'voice'">
-                        <img src="../assets/voice.png" class="art">
-                        <h4 class="art-text">Voice Analysis</h4>
-                    </div>
-                    <div class="test-box" @touchstart="isTouched = 'posture'" @click="$router.push('/write')"
-                        :class="{ active: isTouched == 'posture' }">
-                        <img src="../assets/rotatedarrow.png" class="rotated-arrow" v-show="isTouched == 'posture'">
-                        <img src="../assets/posture.png" class="art">
-                        <h4 class="art-text">Scribble Test</h4>
-                    </div>
-                    <div class="test-box" @touchstart="isTouched = 'hand'" :class="{ active: isTouched == 'hand' }"
-                        @click="$router.push('/tremor')">
-                        <img src="../assets/rotatedarrow.png" class="rotated-arrow" v-show="isTouched == 'hand'">
-                        <img src="../assets/hand.png" class="art">
-                        <h4 class="art-text">Tremor Detection</h4>
-                    </div>
-                </div>
-            </section>
-
-            <section class="recent-analysis-section">
-                <h2>RECENT ANALYSIS</h2>
-                <div class="report-card">
-                    <div class="report-date">04 FEB 2025</div>
-                    <div class="report-title">COMPLETE TEST REPORT</div>
-                    <button class="download-button" @click="getRecentReport">
-                        Download Now
-                        <span class="down-arrow">↓</span>
-                    </button>
-                    <div class="mail-option">Or Mail it Instead</div>
-                </div>
-            </section>
-            <div class="app-footer">
-                <div class="nav-items">
-                    <div class="nav-item">
-                        <img src="../assets/user.png" alt="Profile Icon" class="icon">
-                        <div class="nav-text">Profile</div>
-                    </div>
-                    <div class="nav-item">
-                        <img src="../assets/web.png" alt="Resources Icon" class="icon">
-                        <div class="nav-text">Resources</div>
-                    </div>
-                    <div class="nav-item">
-                        <img src="../assets/bug.png" alt="Report Icon" class="icon">
-
-                        <div class="nav-text">Report</div>
-                    </div>
-                    <div class="nav-item">
-                        <img src="../assets/language.png" alt="Language Icon" class="icon">
-                        <div class="nav-text">Language</div>
-                    </div>
-                </div>
-                <div class="footer-credit">
-                    Made with ☕ & 💖 by <span style="font-weight: 800;">Team Meltdown</span> | 2025
-                </div>
-            </div>
+      <section class="all-tests-section">
+        <div class="section-header">
+          <h2>All Assessments</h2>
+          <small>Select a module to continue</small>
         </div>
 
+        <div class="test-boxes">
+          <button
+            class="test-box"
+            :class="{ active: selectedTest === 'voice' }"
+            @click="goToTest('/voice', 3, 'voice')"
+          >
+            <img src="../assets/voice.png" class="art" alt="Voice" />
+            <h4 class="art-text">Voice Analysis</h4>
+          </button>
 
+          <button
+            class="test-box"
+            :class="{ active: selectedTest === 'write' }"
+            @click="goToTest('/write', 2, 'write')"
+          >
+            <img src="../assets/posture.png" class="art" alt="Scribble" />
+            <h4 class="art-text">Scribble Test</h4>
+          </button>
+
+          <button
+            class="test-box"
+            :class="{ active: selectedTest === 'tremor' }"
+            @click="goToTest('/tremor', 1, 'tremor')"
+          >
+            <img src="../assets/hand.png" class="art" alt="Tremor" />
+            <h4 class="art-text">Tremor Detection</h4>
+          </button>
+        </div>
+      </section>
+
+      <section class="recent-analysis-section">
+        <h2>Recent Analysis</h2>
+
+        <div class="report-card">
+          <div class="report-date">{{ todayLabel }}</div>
+          <div class="report-title">Generate the latest summary report</div>
+
+          <button class="download-button" :disabled="isDownloading" @click="getRecentReport">
+            {{ isDownloading ? 'Preparing report...' : 'Download Report' }}
+            <span class="down-arrow">↓</span>
+          </button>
+
+          <div class="mail-row">
+            <input
+              v-model="email"
+              class="mail-input"
+              type="email"
+              placeholder="name@email.com"
+              aria-label="Email"
+            />
+            <button class="mail-button" @click="mailReport">Mail</button>
+          </div>
+
+          <p class="status" :class="statusType" v-if="statusMessage">{{ statusMessage }}</p>
+        </div>
+      </section>
     </div>
+  </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import 'vue3-carousel/dist/carousel.css';
 import { Carousel, Slide } from 'vue3-carousel';
 
-import cardImage1 from "../assets/banner.png"
-import cardImage2 from "../assets/banner2.png"
-import cardImage3 from "../assets/banner3.png"
+import cardImage1 from '../assets/banner.png';
+import cardImage2 from '../assets/banner2.png';
+import cardImage3 from '../assets/banner3.png';
+import { API_ENDPOINTS } from '../config/api';
 
-const isTouched = ref('voice')
+const router = useRouter();
+const selectedTest = ref('voice');
+const email = ref('');
+const isDownloading = ref(false);
+const statusMessage = ref('');
+const statusType = ref('info');
 
-const images = [{ "id": 1, "url": cardImage2, "route": "/tremor" }, { "id": 2, "url": cardImage3, "route": "/write" }, { "id": 3, "url": cardImage1, "route": "/voice" }]
+const todayLabel = computed(() =>
+  new Intl.DateTimeFormat('en-US', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date())
+);
 
-async function getRecentReport(){
-    try {
-        const response = await fetch('https://6124-122-187-117-178.ngrok-free.app/report', {
-            method: 'GET',
-        });
+const images = [
+  { id: 1, url: cardImage2, route: '/tremor' },
+  { id: 2, url: cardImage3, route: '/write' },
+  { id: 3, url: cardImage1, route: '/voice' },
+];
 
-        if (response.ok) {
-            const blob = await response.blob();
-            const downloadUrl = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = downloadUrl;
-            link.download = 'analysis.pdf';
-            link.target = '_blank';
+function goToTest(route, id, testName = '') {
+  if (testName) {
+    selectedTest.value = testName;
+  }
+  router.push(route);
+}
 
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(downloadUrl);
-        } else {
-            const errorText = await response.text();
-            console.error('Failed to submit recording:', errorText);
-        }
-    } catch (error) {
-        console.error('Error fetching PDF:', error);
+async function getRecentReport() {
+  if (isDownloading.value) return;
+
+  isDownloading.value = true;
+  statusMessage.value = '';
+
+  try {
+    const response = await fetch(API_ENDPOINTS.report, { method: 'GET' });
+
+    if (!response.ok) {
+      throw new Error(`Report request failed with status ${response.status}`);
     }
+
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = downloadUrl;
+    link.download = `neurotone-report-${new Date().toISOString().slice(0, 10)}.pdf`;
+    link.target = '_blank';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+
+    statusType.value = 'success';
+    statusMessage.value = 'Report downloaded successfully.';
+  } catch (error) {
+    statusType.value = 'error';
+    statusMessage.value = error.message || 'Unable to download the report.';
+  } finally {
+    isDownloading.value = false;
+  }
+}
+
+function mailReport() {
+  if (!email.value || !email.value.includes('@')) {
+    statusType.value = 'error';
+    statusMessage.value = 'Add a valid email address to continue.';
+    return;
+  }
+
+  const subject = encodeURIComponent('Neurotone Recent Analysis Report');
+  const body = encodeURIComponent(
+    `Please attach the latest Neurotone report for ${todayLabel.value}.`
+  );
+
+  window.location.href = `mailto:${email.value}?subject=${subject}&body=${body}`;
+  statusType.value = 'success';
+  statusMessage.value = 'Opened your mail app with a pre-filled request.';
 }
 
 const config = {
-    height: 196,
-    itemsToShow: 1,
-    gap: 5,
-    autoplay: 3000,
-    wrapAround: true,
-    pauseAutoplayOnHover: true,
+  height: 220,
+  itemsToShow: 1,
+  gap: 12,
+  autoplay: 3200,
+  wrapAround: true,
+  pauseAutoplayOnHover: true,
 };
-
 </script>
 
 <style scoped>
 .app-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    max-width: 100%;
-    width: 100%;
-    margin: 0 auto;
-    font-family: Poppins;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  margin: 0 auto;
+  font-family: Poppins, sans-serif;
+  background: radial-gradient(circle at top, #fff2f8 0%, #fffafc 58%, #f6f5ff 100%);
 }
 
 .main-content {
-    flex: 1;
-    padding: 0;
-    overflow-y: auto;
+  flex: 1;
+  padding-bottom: 2rem;
+  overflow-y: auto;
 }
 
 .title-section {
-    margin-bottom: 1rem;
-    padding: 1rem 0;
-    padding-top: 2.4rem;
-    padding-bottom: 1.5rem;
-    text-align: center;
-    background-color: #FFF0F5;
+  margin-bottom: 1rem;
+  padding: 2.2rem 1.2rem 1.2rem;
+  text-align: center;
+}
+
+.eyebrow {
+  color: #8f6c7e;
+  font-size: 0.75rem;
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.03rem;
 }
 
 h1 {
-    color: #eb4899;
-    font-weight: 800;
-    font-size: 1.5rem;
+  color: #eb4899;
+  font-weight: 800;
+  font-size: 1.7rem;
 }
 
-.brown-box {
-    height: 13.5rem;
-    background-image: url('../assets/banner.png');
-    background-size: cover;
-    margin: 0 1.2rem 2.2rem 1.2rem;
-    border-radius: 0.9rem;
+.today {
+  color: #5f4b56;
+  margin-top: 0.6rem;
+  font-size: 0.85rem;
 }
 
-.all-tests-section {
-    padding: 0 1.2rem;
+.carousel-shell {
+  margin-bottom: 1.4rem;
+}
+
+.slide {
+  padding: 0 1rem;
+}
+
+.autoscroll-container {
+  height: 13.8rem;
+  width: 100%;
+  border-radius: 1rem;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 8px 24px rgba(92, 66, 49, 0.25);
+  position: relative;
+}
+
+.slide-chip {
+  position: absolute;
+  right: 0.8rem;
+  bottom: 0.8rem;
+  background: rgba(255, 255, 255, 0.88);
+  color: #5c4231;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+}
+
+.all-tests-section,
+.recent-analysis-section {
+  padding: 0 1.2rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.8rem;
 }
 
 h2 {
-    color: #5C4231;
-    font-size: 1.2rem;
-    font-weight: 800;
-    margin-bottom: 1rem;
+  color: #5c4231;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+small {
+  color: #8a6d5b;
+  font-size: 0.74rem;
 }
 
 .test-boxes {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 2.2rem;
-    overflow-x: scroll;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
 }
 
 .test-box {
-    width: 12rem;
-    min-width: 12rem;
-    height: 12rem;
-    border-radius: 10px;
-    background-color: #FDECCD;
-    display: flex;
-    justify-content: end;
-    align-items: center;
-    flex-direction: column;
-    padding: 1.8rem;
-    padding-top: 0rem;
+  border: none;
+  min-height: 9.5rem;
+  border-radius: 0.9rem;
+  background: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 1rem 0.7rem;
+  box-shadow: 0 10px 20px rgba(84, 54, 92, 0.08);
 }
 
 .art {
-    height: 3.5rem;
-    width: auto;
+  height: 2.6rem;
+  width: auto;
 }
 
 .art-text {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #5C4231;
-    margin-top: 0.8rem;
+  font-size: 0.8rem;
+  line-height: 1rem;
+  font-weight: 600;
+  color: #5c4231;
+  text-align: center;
 }
 
 .active {
-    background-color: #FFD384 !important;
-}
-
-.rotated-arrow {
-    padding-bottom: 2rem;
-    padding-left: 8.6rem;
-}
-
-.recent-analysis-section {
-    padding: 0 1.2rem;
+  background: linear-gradient(180deg, #ffeaf4 0%, #ffe5c8 100%);
+  outline: 1px solid #f4bdd8;
 }
 
 .report-card {
-    background-color: #3d2200;
-    padding: 2.2rem 1.2rem;
-    border-radius: 10px;
-    color: #e9c59a;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    margin-bottom: 2rem;
+  background: linear-gradient(140deg, #3d2200 0%, #553014 100%);
+  padding: 1.35rem 1.2rem;
+  border-radius: 1rem;
+  color: #f5ddbc;
+  text-align: center;
+  box-shadow: 0 14px 28px rgba(61, 34, 0, 0.25);
 }
 
 .report-date {
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  margin-bottom: 0.45rem;
+  opacity: 0.8;
 }
 
 .report-title {
-    font-size: 1.2rem;
-    font-weight: bold;
-    margin-bottom: 1.4rem;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.95rem;
 }
 
 .download-button {
-    background-color: #e9c59a;
-    color: #5C4231;
-    border: none;
-    padding: 0.5rem 1.2rem;
-    border-radius: 0.8rem;
-    cursor: pointer;
-    font-size: 0.9rem;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
+  background-color: #eed1a7;
+  color: #4d2f19;
+  border: none;
+  width: 100%;
+  padding: 0.78rem 1rem;
+  border-radius: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.download-button:disabled {
+  opacity: 0.65;
 }
 
 .down-arrow {
-    margin-left: 0.7rem;
+  margin-left: 0.45rem;
 }
 
-.mail-option {
-    font-size: 12px;
-    text-decoration: underline;
-    cursor: pointer;
+.mail-row {
+  margin-top: 0.75rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
 }
 
-.app-footer {
-    background-color: #FFF0F5;
-    padding: 1rem 1rem;
+.mail-input {
+  border: 1px solid rgba(255, 232, 204, 0.5);
+  border-radius: 0.65rem;
+  padding: 0.55rem 0.7rem;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff4de;
 }
 
-.nav-items {
-    display: flex;
-    justify-content: space-around;
+.mail-input::placeholder {
+  color: rgba(255, 241, 222, 0.7);
 }
 
-.nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    color: #5C4231;
-    font-size: 12px;
+.mail-button {
+  border: 1px solid rgba(255, 231, 204, 0.6);
+  background: transparent;
+  color: #f6e0c1;
+  border-radius: 0.65rem;
+  padding: 0.55rem 0.9rem;
+  font-weight: 600;
 }
 
-.nav-icon {
-    width: 25px;
-    height: 25px;
-    margin-bottom: 5px;
+.status {
+  margin-top: 0.65rem;
+  font-size: 0.77rem;
+  line-height: 1.2;
 }
 
-.footer-credit {
-    text-align: center;
-    font-size: 12px;
-    color: #5C4231;
-    margin-top: 1.5rem;
-    margin-bottom: 0.5rem;
+.success {
+  color: #a9ffc2;
 }
 
-.icon {
-    height: 2rem;
-    width: auto;
-    max-width: 2rem;
-    max-height: 2rem;
-    margin-bottom: 0.6rem;
+.error {
+  color: #ffc6c6;
 }
 </style>

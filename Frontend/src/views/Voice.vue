@@ -37,6 +37,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import { API_ENDPOINTS } from '../config/api';
 
 // State
 const isRecording = ref(false);
@@ -271,7 +272,7 @@ const submitRecording = async () => {
         formData.append('file', audioBlob.value, 'recording.wav');
         formData.append('transcript', transcript.value);
 
-        const response = await fetch('https://neurotone-docker.onrender.com/analyze', {
+        const response = await fetch(API_ENDPOINTS.voiceAnalyze, {
             method: 'POST',
             body: formData,
         });
